@@ -38,7 +38,7 @@ def load_html(url: str):  # 请求html没什么好说的
         return print('爬取异常')
 
 
-class syzx(object):
+class syzx():
     def __init__(self, search_name: str):
         self.html = load_html(basic_url + search_name)
         self.soup = bs4.BeautifulSoup(self.html, "html.parser")
@@ -51,12 +51,12 @@ class syzx(object):
             topic_list.append(href)
         return topic_list
 
-    def get_names(self) -> dict:
-        title_dict = {}
+    def get_names(self) -> list:
+        # title_dict = {}
         title = re.findall(r'<h3 class="title"><a href=".*?">(.*?)</a></h3></div>', self.html)
-        for i in range(len(title)):
-            title_dict[i] = title[i]
-        return title_dict
+        # for i in range(len(title)):
+        #    title_dict[i] = title[i]
+        return title
 
     def get_resourse(self, topic_url) -> list:
         html = load_html(topic_url)
@@ -110,5 +110,35 @@ def main():
         print("设置的资源节点超出已有资源范围,请把节点设小些")
 
 
+def Gal_get_All_resourse(gal_name: str) -> str:
+    sz = syzx(gal_name)
+    topic_list = sz.get_topic_url()
+    topic_name = sz.get_names()  # there is names list
+    String = ''
+    extract_code_list = []
+    zip_code_list = []
+    for link in topic_list:
+        html = load_html(link)
+        soup = bs4.BeautifulSoup(html, 'html.parser')
+        a = soup.find("a", class_="download-button baidunetdisk rounded-left btn btn-primary")
+        if a != None:
+            baidu_disk_list.append(a.get('href'))
+            button1 = soup.find("button", class_="baidunetdisk-password click-to-copy text-light btn btn-success")
+            button2 = soup.find("button", class_="unzip-password click-to-copy text-warning btn btn-info")
+            extract_code_list.append(re.findall(r'<code>(.*?)</code>', str(button1)))
+            zip_code_list.append(re.findall(r'<code>(.*?)</code>', str(button2)))
+        else:
+            baidu_disk_list.append('这个不是资源')
+            extract_code_list.append([])
+            zip_code_list.append([])
+
+    for i in range(len(topic_name)):
+        String += topic_name[i] + ":" + baidu_disk_list[i] + "," + "提取码:" + str(
+            extract_code_list[i]) + "," + "解压码:" + str(zip_code_list[i]) + "\n"
+
+    return String
+
+
 if __name__ == "__main__":
-    main()
+    keyword = input()
+    print(Gal_get_All_resourse(keyword))
